@@ -1,0 +1,3 @@
+(1) comment out line 882-885 in /src/pyadjoint/adjoint_source_types/multitaper_misfit.py to not 
+taper the adjoint source in time domain like in line 618-621 (set fac = 1.0) in original 
+ma_sub.f90

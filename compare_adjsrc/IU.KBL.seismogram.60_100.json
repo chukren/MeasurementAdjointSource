@@ -1,0 +1,14 @@
+{
+    "IU.KBL..BHR":{
+            "obsd":"../adjsrc_fortran/sac/C201009031635A.proc_obsd_60_100.sac/IU.KBL..BHR.proc_obsd_60_100.sac",
+            "synt":"../adjsrc_fortran/sac/C201009031635A.proc_synt_60_100.sac/IU.KBL.S3.MXR.proc_synt_60_100.sac"
+        },
+    "IU.KBL..BHT":{
+            "obsd":"../adjsrc_fortran/sac/C201009031635A.proc_obsd_60_100.sac/IU.KBL..BHT.proc_obsd_60_100.sac",
+            "synt":"../adjsrc_fortran/sac/C201009031635A.proc_synt_60_100.sac/IU.KBL.S3.MXT.proc_synt_60_100.sac"
+        },
+    "IU.KBL..BHZ":{
+            "obsd":"../adjsrc_fortran/sac/C201009031635A.proc_obsd_60_100.sac/IU.KBL..BHZ.proc_obsd_60_100.sac",
+            "synt":"../adjsrc_fortran/sac/C201009031635A.proc_synt_60_100.sac/IU.KBL.S3.MXZ.proc_synt_60_100.sac"
+        }
+}

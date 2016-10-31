@@ -1,0 +1,23 @@
+{
+    "IU.KBL..BHR":[
+        {
+            "ref":"../adjsrc_fortran/OUTPUT_FILES/KBL.IU.60_100/KBL.IU.BHR.iker07.adj",
+            "syn":"../adjsrc_python/IU.KBL.60_100/IU.KBL..BHR.mt.dt.adj",
+            "tag":"multitaper travel time adjoint source"
+        }
+    ],
+    "IU.KBL..BHT":[
+        {
+            "ref":"../adjsrc_fortran/OUTPUT_FILES/KBL.IU.60_100/KBL.IU.BHT.iker07.adj",
+            "syn":"../adjsrc_python/IU.KBL.60_100/IU.KBL..BHT.mt.dt.adj",
+            "tag":"multitaper travel time adjoint source"
+        }
+    ],
+    "IU.KBL..BHZ":[
+        {
+            "ref":"../adjsrc_fortran/OUTPUT_FILES/KBL.IU.60_100/KBL.IU.BHZ.iker07.adj",
+            "syn":"../adjsrc_python/IU.KBL.60_100/IU.KBL..BHZ.mt.dt.adj",
+            "tag":"multitaper travel time adjoint source"
+        }
+    ]
+}

@@ -274,7 +274,7 @@ program measure_adj
         call mt_adj(istart,data_dtw,syn_dtw,syn_dtw_phydisp,nlen,dt,tshift,dlnA,sigma_dt_cc,sigma_dlnA_cc,&
              dtau_w,dlnA_w,err_dt,err_dlnA,sigma_dt,sigma_dlnA,i_left,i_right,&
              window_chi,tr_adj_src,tr_chi,am_adj_src,am_chi)
-
+ 
         ! KEY: write misfit function values to file (two for each window)
         ! Here are the 20 columns of the vector window_chi
         !  1: MT-TT chi,    2: MT-dlnA chi,    3: XC-TT chi,    4: XC-dlnA chi
@@ -393,7 +393,8 @@ program measure_adj
       ! we do use a bandpass filter here again on the adjoint source. this is slightly different
       ! to the transfer function filter in SAC used initially to filter data & synthetics.
       ! but this seems to be the best and fairly easy what we can do here...
-      call bandpass(adj_syn_all,npts,dt,fstart0,fend0) ! sac butterworth filter
+      ! Youyi for test
+      !call bandpass(adj_syn_all,npts,dt,fstart0,fend0) ! sac butterworth filter
 
       ! cut and interpolate to match time-stepping for SEM
       ! NOTE: This can leave a non-zero value to start the record,

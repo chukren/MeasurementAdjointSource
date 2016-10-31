@@ -73,6 +73,12 @@ contains
          phi_w, abs_w, err_phi, err_abs, phi_mtm, abs_mtm
     double precision :: eph_ave,edt_ave,eabs_ave,eabs2_ave,eph_iom,edt_iom,eabs_iom,eabs2_iom
     double precision, dimension(:,:),allocatable :: tas,phi_mul,abs_mul,dtau_mul,dlnA_mul
+    
+    !=== Youyi Ruan 11/04/2015: add for different taper choice  
+    ! local variable
+    integer :: nmax_pcent
+    integer :: ii
+    double precision :: t1, time
 
     !-------------------------------------------------------------
     ! check the window [tstart, tend] (the first two unnecessary)
@@ -105,14 +111,25 @@ contains
     sfac1 = (2./dble(nlen))**2   ! for Welch window
     ipwr_t = 10                  ! for time-domain cosine taper: 1 - [cos(t)]^(ipwr)
 
+    !=== Youyi Ruan 11/04/2015: different taper for benchmark 
     ! pre-processing time-domain taper
+    !nmax_pcent = nint(0.15 * nlen)
+    
     do i = 1,nlen
       !fac = 1.                                         ! boxcar window
       !fac = 1 - sfac1*((i-1) - dble(nlen)/2.)**2       ! welch window
       fac = 1. - cos(PI*(i-1)/(nlen-1))**ipwr_t        ! cosine window
-
-      syn_dtw(i)  = syn_dtw(i) * fac  ! syn, windowed
+      !=== Youyi Ruan 10/15/2015 Hann window for test ===
+      !if (i <= nmax_pcent) then
+      !  fac = 0.5 * (1.0 - cos(2*PI*(i-1)/(2*nmax_pcent-1)))
+      !endif
+      !if (i >= (nlen - nmax_pcent)) then
+      !  fac = 0.5 * (1.0 - cos(2*PI*(i-1-(nlen-2*nmax_pcent))/(2*nmax_pcent-1)))
+      !endif
+      !===
+      syn_dtw(i) = syn_dtw(i) * fac  ! syn, windowed
       dat_dtw(i) = dat_dtw(i) * fac  ! dat, windowed
+
       if (USE_PHYSICAL_DISPERSION) then
           syn_dtw_phydisp(i)=syn_dtw_phydisp(i)*fac
       endif
@@ -136,8 +153,33 @@ contains
     ! no need to compute velocity and acceleration of syn in mt_measure()
 
     ! deconstruct data using (negative) cross-correlation measurments
-    call deconstruct_dat_cc(filename,dat_dtw,tstart,dt,nlen, &
-        ishift,tshift,dlnA,dat_dtw_cc)
+    !=== Youyi Ruan 11/04/2015
+    ! the re-windowed data in deconstruct_dat_cc() is problematic because
+    ! apply cc_shift and cc_dlnA to the already window-tapered data will
+    ! end up with one end set to zero (no data outside window availabe) and 
+    ! another end fill with the cut off value, this non-zero/constant ending
+    ! points will worsen when a aplitude correction applied. 
+    do i = 1, nlen
+      time = tstart + (i-1) * dt
+      ! re-window data from original record
+      ii = floor((time-t0)/dt) + 1 + ishift
+      ! checks out-of-bounds (very unlikely event!)
+      if( ii >= NPT ) cycle
+      t1 = floor((time-t0)/dt) * dt + t0
+      dat_dtw_cc(i) = dat_dt(ii) + (dat_dt(ii+1)-dat_dt(ii)) * (time-t1) / dt
+      dat_dtw_cc(i) = dat_dtw_cc(i) * exp(-dlnA)
+      ! Hann taper for test only
+      !if (i <= nmax_pcent) then
+      !  fac = 0.5 * (1.0 - cos(2*PI*(i-1)/(2*nmax_pcent-1)))
+      !endif
+      !if (i >= (nlen - nmax_pcent)) then
+      !  fac = 0.5 * (1.0 - cos(2*PI*(i-1-(nlen-2*nmax_pcent))/(2*nmax_pcent-1)))
+      !endif
+      fac = 1. - cos(PI*(i-1)/(nlen-1))**ipwr_t   ! cosine window
+      dat_dtw_cc(i) = dat_dtw_cc(i) * fac  ! dat, windowed
+    enddo
+    !call deconstruct_dat_cc(filename,dat_dtw,tstart,dt,nlen, &
+    !    ishift,tshift,dlnA,dat_dtw_cc)
 
     ! reconstruct synthetics using cross-correlation measurements (plotting purposes only)
     ! syn_dtw_cc (reconstructed syn with both dt/dlnA), syn_dtw_cc_dt (with only dt)
@@ -252,7 +294,10 @@ contains
 
     ! assign number of tapers (is_mtm can only be 1, 2 or 3 at this point)
     if (is_mtm == 1) then
-      ntaper = int(NPI * 2.0)
+      !=== Youyi Ruan 11/05/2015: use tapers with high eigen values for better
+      !band concentration
+      !ntaper = int(NPI * 2.0)
+      ntaper = floor(NPI * 2.0 - 3)
     else
       ntaper = 1
     endif
@@ -685,6 +730,7 @@ contains
       df = 1. /(NPT*dt)
       ffac = 2.0 * df * sum(w_taper(i_left:i_right) )   ! CHT: 1 --> i_left
       if (DISPLAY_DETAILS) print *, '     f-dom taper normalization factor, ffac = ', sngl(ffac)
+      if (DISPLAY_DETAILS) print *, '     df ', sngl(df)
 
       ! wp_taper and wq_taper are modified frequency-domain tapers
       ! Notice the option to include the frequency-dependent error.
@@ -721,7 +767,11 @@ contains
 !!$    close(88)
 
       ! allocate MT variables
-      ntaper = int(NPI * 2.0)
+      !===
+      ! added by Youyi Ruan for high eigen value tapers only for better frequency
+      ! concentration 
+      !===
+      ntaper = int(NPI * 2.0) - 3
       allocate(tas(NPT,ntaper))
       allocate(syn_dtw_ho_all(NPT,ntaper))
       allocate(syn_vtw_ho_all(NPT,ntaper))
@@ -772,6 +822,9 @@ contains
         pwc_adj(:) = cmplx(0.,0.)
         qwc_adj(:) = cmplx(0.,0.)
 
+        !=== Youyi Ruan: test for the low frequency content included in the 
+        !if (DISPLAY_DETAILS) print *, 'i_left ', i_left
+        !do i = i_left, i_right ! LQY: i_left = 1
         do i = 1, i_right ! LQY: i_left = 1
           pwc_adj(i) =  syn_vtw_ho_all(i,ictaper) / v_bot_mtm(i)
           qwc_adj(i) = -syn_dtw_ho_all(i,ictaper) / d_bot_mtm(i)
@@ -877,7 +930,8 @@ contains
     if(is_mtm==1) window_chi(2) = 0.5 * 2.0 * df * sum( (dlnA_w(1:i_right))**2 * wq_taper(1:i_right) )
     window_chi(3) = 0.5 * (tshift/sigma_dt_cc)**2
     window_chi(4) = 0.5 * (dlnA/sigma_dlnA_cc)**2
-
+    write(*,*) tshift,sigma_dt_cc,dlnA,sigma_dlnA_cc
+    
     ! cc/averaged mt measurement (no uncertainty estimates)
     if(is_mtm==1) window_chi(5)  = sum( dtau_w(1:i_right) * w_taper(1:i_right) ) / sum(w_taper(1:i_right) )
     if(is_mtm==1) window_chi(6)  = sum( dlnA_w(1:i_right) * w_taper(1:i_right) ) / sum(w_taper(1:i_right) )
@@ -1125,7 +1179,9 @@ contains
     fend = min(fend, 1./(2.0*dt))
 
     ! number of tapers (slepian tapers, type = 1)
-    ntaper = int(NPI * 2.0)
+    !=== Youyi Ruan 10/25/2015: use tapers with high eigen values (> 0.96)   
+    !ntaper = int(NPI * 2.0)
+    ntaper = int(NPI * 2.0) - 3 
     if( ntaper > 10 ) ntaper = 10
     if( ntaper < 1 ) ntaper = 10
     if( use_trace .and. fstart >= fend - ntaper*df ) then
@@ -1515,7 +1571,9 @@ contains
       phi_wt(i) = atan2( aimag(trans(i)) , real(trans(i)) )
       abs_wt(i) = abs(trans(i))
       fr(i) = df*(i-1)
-      if (mod(i,idf_new)==0 .and. OUTPUT_MEASUREMENT_FILES .and. ioactive) then
+      !=== Youyi RUAN, 19/01/2016, output every point for benchmark
+      !if (mod(i,idf_new)==0 .and. OUTPUT_MEASUREMENT_FILES .and. ioactive) then
+      if (OUTPUT_MEASUREMENT_FILES .and. ioactive) then
         write(10,*) fr(i), phi_wt(i)
         write(20,*) fr(i), abs_wt(i)
 ! LQY: should not we apply dlnA from cc before this?

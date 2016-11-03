@@ -824,8 +824,8 @@ contains
 
         !=== Youyi Ruan: test for the low frequency content included in the 
         !if (DISPLAY_DETAILS) print *, 'i_left ', i_left
-        !do i = i_left, i_right ! LQY: i_left = 1
-        do i = 1, i_right ! LQY: i_left = 1
+        do i = i_left, i_right ! LQY: i_left = 1
+        !do i = 1, i_right ! LQY: i_left = 1
           pwc_adj(i) =  syn_vtw_ho_all(i,ictaper) / v_bot_mtm(i)
           qwc_adj(i) = -syn_dtw_ho_all(i,ictaper) / d_bot_mtm(i)
         enddo
